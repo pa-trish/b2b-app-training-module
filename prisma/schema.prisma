@@ -1,0 +1,246 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  MANAGER
+  TRAINEE
+}
+
+enum ProgramStatus {
+  DRAFT
+  GENERATING
+  REVIEW
+  PUBLISHED
+}
+
+enum ParseStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum GenerationStatus {
+  IDLE
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  PAUSED
+}
+
+enum ModuleProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum QuestionStatus {
+  OPEN
+  ANSWERED
+}
+
+enum ActivityEventType {
+  MODULE_STARTED
+  SECTION_COMPLETED
+  MODULE_COMPLETED
+  TEST_STARTED
+  TEST_SUBMITTED
+  DAY_COMPLETED
+  QUESTION_SUBMITTED
+  ENROLLMENT_STARTED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         UserRole
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  managedPrograms TrainingProgram[] @relation("ProgramManager")
+  enrollments     Enrollment[]
+}
+
+model TrainingProgram {
+  id               String           @id @default(cuid())
+  managerId        String
+  title            String
+  totalDays        Int
+  timezone         String           @default("Europe/Warsaw")
+  testPolicy       Json
+  managerNotes     String?
+  status           ProgramStatus    @default(DRAFT)
+  generationStatus GenerationStatus @default(IDLE)
+  generationError  String?
+  generationProgress Int            @default(0)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  manager     User          @relation("ProgramManager", fields: [managerId], references: [id], onDelete: Cascade)
+  documents   Document[]
+  days        TrainingDay[]
+  enrollments Enrollment[]
+}
+
+model Document {
+  id            String      @id @default(cuid())
+  programId     String
+  fileName      String
+  mimeType      String
+  storageKey    String
+  extractedText String?
+  parseStatus   ParseStatus @default(PENDING)
+  createdAt     DateTime    @default(now())
+
+  program TrainingProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+}
+
+model TrainingDay {
+  id        String @id @default(cuid())
+  programId String
+  dayNumber Int
+  title     String
+  summary   String
+
+  program TrainingProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  modules Module[]
+
+  @@unique([programId, dayNumber])
+}
+
+model Module {
+  id               String @id @default(cuid())
+  trainingDayId    String
+  order            Int
+  title            String
+  estimatedMinutes Int
+
+  trainingDay TrainingDay     @relation(fields: [trainingDayId], references: [id], onDelete: Cascade)
+  sections    ModuleSection[]
+  test        ModuleTest?
+  progress    ModuleProgress[]
+  questions   TraineeQuestion[]
+
+  @@unique([trainingDayId, order])
+}
+
+model ModuleSection {
+  id            String @id @default(cuid())
+  moduleId      String
+  order         Int
+  componentType String
+  content       Json
+
+  module    Module            @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  questions TraineeQuestion[]
+
+  @@unique([moduleId, order])
+}
+
+model ModuleTest {
+  id           String @id @default(cuid())
+  moduleId     String @unique
+  questions    Json
+  passPercent  Int
+  maxAttempts  Int
+  complexity   String
+  allowRetake  Boolean @default(false)
+
+  module   Module        @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  attempts TestAttempt[]
+}
+
+model Enrollment {
+  id        String           @id @default(cuid())
+  programId String
+  traineeId String
+  startDate DateTime         @db.Date
+  status    EnrollmentStatus @default(ACTIVE)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  program  TrainingProgram   @relation(fields: [programId], references: [id], onDelete: Cascade)
+  trainee  User              @relation(fields: [traineeId], references: [id], onDelete: Cascade)
+  progress ModuleProgress[]
+  attempts TestAttempt[]
+  questions TraineeQuestion[]
+  logs     ActivityLog[]
+
+  @@unique([programId, traineeId])
+}
+
+model ModuleProgress {
+  id                String               @id @default(cuid())
+  enrollmentId      String
+  moduleId            String
+  status              ModuleProgressStatus @default(NOT_STARTED)
+  sectionsCompleted   Int[]                @default([])
+  startedAt           DateTime?
+  completedAt         DateTime?
+  updatedAt           DateTime             @updatedAt
+
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  module     Module     @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@unique([enrollmentId, moduleId])
+}
+
+model TestAttempt {
+  id            String    @id @default(cuid())
+  enrollmentId  String
+  moduleTestId  String
+  attemptNumber Int
+  score         Float?
+  answers       Json?
+  startedAt     DateTime  @default(now())
+  finishedAt    DateTime?
+  passed        Boolean?
+
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  moduleTest ModuleTest @relation(fields: [moduleTestId], references: [id], onDelete: Cascade)
+
+  @@unique([enrollmentId, moduleTestId, attemptNumber])
+}
+
+model TraineeQuestion {
+  id           String         @id @default(cuid())
+  enrollmentId String
+  moduleId     String
+  sectionId    String?
+  body         String
+  status       QuestionStatus @default(OPEN)
+  createdAt    DateTime       @default(now())
+
+  enrollment Enrollment     @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  module     Module         @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  section    ModuleSection? @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+}
+
+model ActivityLog {
+  id           String            @id @default(cuid())
+  enrollmentId String
+  userId       String
+  eventType    ActivityEventType
+  entityType   String
+  entityId     String
+  metadata     Json?
+  occurredAt   DateTime          @default(now())
+
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  @@index([enrollmentId, occurredAt])
+}
