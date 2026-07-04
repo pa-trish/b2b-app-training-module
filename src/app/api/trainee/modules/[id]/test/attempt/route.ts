@@ -2,8 +2,9 @@ import { getAuthAdapter } from "@/lib/auth/stub";
 import { apiError, jsonOk } from "@/lib/api/helpers";
 import { prisma } from "@/lib/db";
 import { logActivity } from "@/lib/training/activity";
-import { parseTestQuestions } from "@/lib/ai/persist-plan";
+import { parseTestQuestions } from "@/lib/training/test-questions";
 import { scoreTestAttempt } from "@/lib/training/scoring";
+import { requireActiveEnrollment } from "@/lib/training/enrollment";
 
 export async function POST(
   request: Request,
@@ -20,12 +21,7 @@ export async function POST(
     const body = await request.json();
     const { enrollmentId, action, answers, attemptId } = body;
 
-    const enrollment = await prisma.enrollment.findFirst({
-      where: { id: enrollmentId, traineeId: session.userId },
-    });
-    if (!enrollment) {
-      return jsonOk({ error: "Enrollment not found" }, 404);
-    }
+    const enrollment = await requireActiveEnrollment(enrollmentId, session.userId);
 
     const module = await prisma.module.findFirst({
       where: { id: moduleId, trainingDay: { programId: enrollment.programId } },

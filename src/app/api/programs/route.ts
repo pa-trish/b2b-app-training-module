@@ -13,6 +13,7 @@ export async function POST(request: Request) {
         managerId: manager.id,
         title: body.title || "Untitled Training Program",
         totalDays: Number(body.totalDays) || 5,
+        dailyMinutes: Number(body.dailyMinutes) || 150,
         timezone: body.timezone || process.env.DEFAULT_TIMEZONE || "Europe/Warsaw",
         managerNotes: body.managerNotes || null,
         testPolicy: body.testPolicy || DEFAULT_TEST_POLICY,

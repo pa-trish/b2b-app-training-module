@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { EnrollmentStatusBadge } from "@/components/manager/EnrollmentStatusBadge";
 
 export default async function ManagerDashboardPage() {
   const manager = await getAuthAdapter().requireManager();
@@ -52,6 +53,18 @@ export default async function ManagerDashboardPage() {
                     View program
                   </Button>
                 </Link>
+                {program.hasPlan ? (
+                  <Link href={`/manager/programs/${program.id}/preview`}>
+                    <Button variant="secondary" size="sm">
+                      Preview program
+                    </Button>
+                  </Link>
+                ) : null}
+                {program.status === "PUBLISHED" ? (
+                  <Link href={`/manager/programs/${program.id}?tab=trainees`}>
+                    <Button size="sm">Assign trainee</Button>
+                  </Link>
+                ) : null}
               </div>
 
               {program.trainees.length > 0 ? (
@@ -63,7 +76,10 @@ export default async function ManagerDashboardPage() {
                       className="flex flex-col gap-2 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between"
                     >
                       <div>
-                        <p className="font-medium">{trainee.name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">{trainee.name}</p>
+                          <EnrollmentStatusBadge status={trainee.status} />
+                        </div>
                         <p className="text-sm text-muted-foreground">{trainee.email}</p>
                         <p className="text-xs text-muted-foreground">
                           Day {trainee.currentDay} · {trainee.testAttempts} test attempts

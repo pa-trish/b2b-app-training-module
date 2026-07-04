@@ -35,7 +35,12 @@ export async function POST(
 
       try {
         extractedText = await extractTextFromBuffer(buffer, entry.type, entry.name);
+        if (!extractedText.trim()) {
+          extractedText = null;
+          parseStatus = "FAILED";
+        }
       } catch {
+        extractedText = null;
         parseStatus = "FAILED";
       }
 
@@ -50,10 +55,12 @@ export async function POST(
         },
       });
 
-      uploaded.push(doc);
+      uploaded.push({ ...doc, wordCount: extractedText ? extractedText.trim().split(/\s+/).length : 0 });
     }
 
-    return jsonOk({ documents: uploaded }, 201);
+    const totalWords = uploaded.reduce((sum, doc) => sum + (doc.wordCount ?? 0), 0);
+
+    return jsonOk({ documents: uploaded, stats: { totalWords } }, 201);
   } catch (error) {
     return apiError(error);
   }

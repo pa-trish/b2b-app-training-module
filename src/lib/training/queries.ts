@@ -7,7 +7,8 @@ import {
   getDayUnlockState,
   formatUnlockDate,
 } from "@/lib/training/unlock";
-import { parseTestQuestions } from "@/lib/ai/persist-plan";
+import { parseTestQuestions } from "@/lib/training/test-questions";
+import { formatUserName } from "@/lib/users/trainee-name";
 
 export function toModuleStatus(status: ModuleProgressStatus): ModuleStatus {
   switch (status) {
@@ -229,7 +230,7 @@ export async function getManagerDashboard(managerId: string) {
 
       return {
         enrollmentId: enrollment.id,
-        name: enrollment.trainee.name,
+        name: formatUserName(enrollment.trainee),
         email: enrollment.trainee.email,
         startDate: enrollment.startDate,
         status: enrollment.status,
@@ -247,6 +248,7 @@ export async function getManagerDashboard(managerId: string) {
       totalDays: program.totalDays,
       documentCount: program._count.documents,
       traineeCount: program._count.enrollments,
+      hasPlan: program.days.length > 0,
       trainees,
     };
   });

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { stripDayPrefix } from "@/lib/training/day-title";
 import { Lock, CheckCircle2, Circle } from "lucide-react";
 import type { DayUnlockState } from "@/lib/types";
 
@@ -35,7 +36,7 @@ export function DayTimeline({ days, basePath }: { days: DayTimelineItem[]; baseP
               )}
               Day {day.dayNumber}
             </div>
-            <span className="line-clamp-2 text-xs text-muted-foreground">{day.title}</span>
+            <span className="line-clamp-2 text-xs text-muted-foreground">{stripDayPrefix(day.title)}</span>
           </div>
         );
 

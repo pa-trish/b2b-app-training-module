@@ -13,25 +13,33 @@ export async function GET() {
 
     if (session.role === "trainee") {
       const enrollments = await prisma.enrollment.findMany({
-        where: { traineeId: session.userId, status: "ACTIVE" },
+        where: { traineeId: session.userId },
         include: { program: true, progress: true },
+        orderBy: { updatedAt: "desc" },
       });
 
-      const result = await Promise.all(
-        enrollments.map(async (e) => {
-          const dashboard = await getEnrollmentDashboard(e.id, e.traineeId);
-          return {
-            id: e.id,
-            program: e.program,
-            progressPercent: dashboard?.progressPercent ?? 0,
-          };
-        })
-      );
+      const active = [];
+      const completed = [];
 
-      return jsonOk({ enrollments: result });
+      for (const e of enrollments) {
+        const dashboard = await getEnrollmentDashboard(e.id, e.traineeId);
+        const item = {
+          id: e.id,
+          status: e.status,
+          program: e.program,
+          progressPercent: dashboard?.progressPercent ?? 0,
+        };
+        if (e.status === "ACTIVE") {
+          active.push(item);
+        } else if (e.status === "COMPLETED") {
+          completed.push(item);
+        }
+      }
+
+      return jsonOk({ enrollments: active, completedEnrollments: completed });
     }
 
-    return jsonOk({ enrollments: [] });
+    return jsonOk({ enrollments: [], completedEnrollments: [] });
   } catch (error) {
     return apiError(error);
   }

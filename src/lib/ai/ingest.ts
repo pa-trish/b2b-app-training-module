@@ -1,5 +1,18 @@
 import mammoth from "mammoth";
+import { createRequire } from "node:module";
+import { pathToFileURL } from "node:url";
 import { readStoredFile } from "@/lib/storage/files";
+
+let pdfWorkerConfigured = false;
+
+function ensurePdfWorker(PDFParse: typeof import("pdf-parse").PDFParse) {
+  if (pdfWorkerConfigured) return;
+
+  const require = createRequire(`${process.cwd()}/package.json`);
+  const workerPath = require.resolve("pdfjs-dist/legacy/build/pdf.worker.mjs");
+  PDFParse.setWorker(pathToFileURL(workerPath).href);
+  pdfWorkerConfigured = true;
+}
 
 export async function extractTextFromBuffer(
   buffer: Buffer,
@@ -21,13 +34,15 @@ export async function extractTextFromBuffer(
   }
 
   if (mimeType === "application/pdf" || lower.endsWith(".pdf")) {
-    const pdfParseModule = await import("pdf-parse");
-    const pdfParse =
-      "default" in pdfParseModule
-        ? (pdfParseModule.default as (buf: Buffer) => Promise<{ text: string }>)
-        : (pdfParseModule as unknown as (buf: Buffer) => Promise<{ text: string }>);
-    const result = await pdfParse(buffer);
-    return result.text;
+    const { PDFParse } = await import("pdf-parse");
+    ensurePdfWorker(PDFParse);
+    const parser = new PDFParse({ data: buffer });
+    try {
+      const result = await parser.getText();
+      return result.text;
+    } finally {
+      await parser.destroy();
+    }
   }
 
   throw new Error(`Unsupported file type: ${mimeType || fileName}`);

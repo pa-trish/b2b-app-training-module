@@ -33,7 +33,7 @@ export const testSpecSchema = z.object({
 export const moduleSpecSchema = z.object({
   title: z.string(),
   estimatedMinutes: z.number().int().positive(),
-  sections: z.array(componentSpecSchema).min(2),
+  sections: z.array(componentSpecSchema).min(3),
   test: testSpecSchema,
 });
 
@@ -41,7 +41,7 @@ export const daySpecSchema = z.object({
   dayNumber: z.number().int().positive(),
   title: z.string(),
   summary: z.string(),
-  modules: z.array(moduleSpecSchema).min(1),
+  modules: z.array(moduleSpecSchema).min(2),
 });
 
 export const trainingPlanSchema = z.object({
@@ -49,3 +49,4 @@ export const trainingPlanSchema = z.object({
 });
 
 export type TrainingPlan = z.infer<typeof trainingPlanSchema>;
+export type DaySpec = z.infer<typeof daySpecSchema>;

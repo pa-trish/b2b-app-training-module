@@ -1,7 +1,7 @@
 import { getAuthAdapter } from "@/lib/auth/stub";
-import { prisma } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { TraineeDashboard } from "@/components/trainee/TraineeDashboard";
+import { requireEnrollmentPageAccess } from "@/lib/training/access";
 
 export default async function EnrollmentPage({
   params,
@@ -16,19 +16,10 @@ export default async function EnrollmentPage({
   const { enrollmentId } = await params;
   const { preview } = await searchParams;
 
-  if (session.role === "manager" && preview === "1") {
-    const enrollment = await prisma.enrollment.findFirst({
-      where: { id: enrollmentId, program: { managerId: session.userId } },
-    });
-    if (!enrollment) redirect("/manager/dashboard");
-  } else if (session.role === "trainee") {
-    const enrollment = await prisma.enrollment.findFirst({
-      where: { id: enrollmentId, traineeId: session.userId },
-    });
-    if (!enrollment) redirect("/trainee");
-  } else {
-    redirect("/login");
-  }
+  await requireEnrollmentPageAccess(enrollmentId, session, {
+    preview: preview === "1",
+    requireActive: session.role === "trainee",
+  });
 
   return (
     <TraineeDashboard
