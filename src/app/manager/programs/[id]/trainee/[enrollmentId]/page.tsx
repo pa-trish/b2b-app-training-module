@@ -14,6 +14,9 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { EnrollmentActions } from "@/components/manager/EnrollmentActions";
+import { EnrollmentStatusBadge } from "@/components/manager/EnrollmentStatusBadge";
+import { formatUserName } from "@/lib/users/trainee-name";
 
 export default async function TraineeLogsPage({
   params,
@@ -28,14 +31,24 @@ export default async function TraineeLogsPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{enrollment.trainee.name}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold">{formatUserName(enrollment.trainee)}</h1>
+            <EnrollmentStatusBadge status={enrollment.status} />
+          </div>
           <p className="text-muted-foreground">{enrollment.program.title}</p>
         </div>
-        <Link href={`/manager/programs/${id}/preview/${enrollmentId}`}>
-          <Button variant="secondary">Open trainee view</Button>
-        </Link>
+        <div className="flex flex-col items-start gap-3 sm:items-end">
+          <Link href={`/manager/programs/${id}/preview/${enrollmentId}`}>
+            <Button variant="secondary">Open trainee view</Button>
+          </Link>
+          <EnrollmentActions
+            programId={id}
+            enrollmentId={enrollmentId}
+            status={enrollment.status}
+          />
+        </div>
       </div>
 
       <Card>

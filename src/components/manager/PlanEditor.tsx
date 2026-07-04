@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Pencil, Save, X } from "lucide-react";
+import { formatDayHeading, stripDayPrefix } from "@/lib/training/day-title";
 
 type Day = {
   id: string;
@@ -38,7 +39,7 @@ export function PlanEditor({
 
   function startEdit(day: Day) {
     setEditingDayId(day.id);
-    setEditForm({ title: day.title, summary: day.summary });
+    setEditForm({ title: stripDayPrefix(day.title), summary: day.summary });
     setMessage("");
   }
 
@@ -115,7 +116,7 @@ export function PlanEditor({
               ) : (
                 <>
                   <CardTitle className="text-lg">
-                    Day {day.dayNumber}: {day.title}
+                    {formatDayHeading(day.dayNumber, day.title)}
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">{day.summary}</p>
                 </>

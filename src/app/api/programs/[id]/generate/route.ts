@@ -38,7 +38,9 @@ export async function POST(
       },
     });
 
-    runPlanGeneration(id, { aiProvider }).catch(() => undefined);
+    runPlanGeneration(id, { aiProvider }).catch((error) => {
+      console.error("[generate] Plan generation failed:", error);
+    });
 
     return jsonOk({
       status: "started",

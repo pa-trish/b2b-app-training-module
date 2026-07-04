@@ -2,6 +2,7 @@ import { getAuthAdapter } from "@/lib/auth/stub";
 import { apiError, jsonOk } from "@/lib/api/helpers";
 import { getModuleDetail } from "@/lib/training/queries";
 import { prisma } from "@/lib/db";
+import { requireActiveEnrollment } from "@/lib/training/enrollment";
 
 export async function GET(
   request: Request,
@@ -33,6 +34,7 @@ export async function GET(
       traineeId = enrollment.traineeId;
     } else {
       await auth.requireTrainee();
+      await requireActiveEnrollment(enrollmentId, session.userId);
     }
 
     const detail = await getModuleDetail(id, enrollmentId, traineeId);

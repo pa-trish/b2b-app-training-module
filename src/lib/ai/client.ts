@@ -22,6 +22,8 @@ export function getAIClient(): OpenAI | null {
     apiKey,
     baseURL,
     defaultHeaders,
+    timeout: 120_000,
+    maxRetries: 1,
   });
 }
 

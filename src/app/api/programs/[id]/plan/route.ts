@@ -55,15 +55,15 @@ export async function PATCH(
       return jsonOk({ error: "Not found" }, 404);
     }
 
-    if (body.title || body.managerNotes !== undefined || body.testPolicy) {
-      await prisma.trainingProgram.update({
-        where: { id },
-        data: {
-          title: body.title,
-          managerNotes: body.managerNotes,
-          testPolicy: body.testPolicy,
-        },
-      });
+    const programUpdates: Record<string, unknown> = {};
+    if (body.title !== undefined) programUpdates.title = body.title;
+    if (body.managerNotes !== undefined) programUpdates.managerNotes = body.managerNotes;
+    if (body.testPolicy !== undefined) programUpdates.testPolicy = body.testPolicy;
+    if (body.totalDays !== undefined) programUpdates.totalDays = Number(body.totalDays);
+    if (body.dailyMinutes !== undefined) programUpdates.dailyMinutes = Number(body.dailyMinutes);
+
+    if (Object.keys(programUpdates).length > 0) {
+      await prisma.trainingProgram.update({ where: { id }, data: programUpdates });
     }
 
     if (body.day) {

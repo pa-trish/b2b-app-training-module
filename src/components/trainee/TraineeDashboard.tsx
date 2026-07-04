@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { DayTimeline } from "@/components/library/DayTimeline";
 import { StatusBadge } from "@/components/library/StatusBadge";
+import { formatDayHeading } from "@/lib/training/day-title";
 import type { ModuleStatus } from "@/lib/types";
 import { Lock } from "lucide-react";
 
@@ -96,7 +97,7 @@ export function TraineeDashboard({ enrollmentId, preview }: { enrollmentId: stri
             <Card key={day.dayNumber}>
               <CardHeader>
                 <CardTitle className="text-lg">
-                  Day {day.dayNumber}: {day.title}
+                  {formatDayHeading(day.dayNumber, day.title)}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">

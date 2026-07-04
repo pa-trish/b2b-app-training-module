@@ -39,7 +39,6 @@ export async function POST(request: Request) {
       where: { id: user.id },
       data: {
         passwordHash: newHash,
-        passwordChangeRequired: false,
       },
     });
 

@@ -24,6 +24,7 @@ export default async function ManagerLayout({
             </Link>
             <nav className="flex gap-4 text-sm text-muted-foreground">
               <Link href="/manager/dashboard">Dashboard</Link>
+              <Link href="/manager/trainees">Trainees</Link>
               <Link href="/manager/programs/new">New program</Link>
             </nav>
           </div>

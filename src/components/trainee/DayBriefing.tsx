@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/library/StatusBadge";
+import { formatDayHeading } from "@/lib/training/day-title";
 import type { ModuleStatus } from "@/lib/types";
 
 type DayData = {
@@ -50,7 +51,7 @@ export function DayBriefing({
           ← Back to timeline
         </Link>
         <h1 className="mt-2 text-3xl font-bold">
-          Day {day.dayNumber}: {day.title}
+          {formatDayHeading(day.dayNumber, day.title)}
         </h1>
         <p className="text-muted-foreground">{day.summary}</p>
       </div>

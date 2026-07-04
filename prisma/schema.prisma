@@ -37,7 +37,7 @@ enum GenerationStatus {
 enum EnrollmentStatus {
   ACTIVE
   COMPLETED
-  PAUSED
+  REMOVED
 }
 
 enum ModuleProgressStatus {
@@ -60,6 +60,8 @@ enum ActivityEventType {
   DAY_COMPLETED
   QUESTION_SUBMITTED
   ENROLLMENT_STARTED
+  ENROLLMENT_COMPLETED
+  ENROLLMENT_REMOVED
 }
 
 model User {
@@ -67,10 +69,15 @@ model User {
   email        String   @unique
   passwordHash String
   name         String
+  firstName    String?
+  lastName     String?
   role         UserRole
+  managerId    String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  manager         User?             @relation("ManagedTrainees", fields: [managerId], references: [id], onDelete: SetNull)
+  trainees        User[]            @relation("ManagedTrainees")
   managedPrograms TrainingProgram[] @relation("ProgramManager")
   enrollments     Enrollment[]
 }
@@ -83,6 +90,7 @@ model TrainingProgram {
   timezone         String           @default("Europe/Warsaw")
   testPolicy       Json
   managerNotes     String?
+  dailyMinutes     Int              @default(150)
   status           ProgramStatus    @default(DRAFT)
   generationStatus GenerationStatus @default(IDLE)
   generationError  String?

@@ -2,6 +2,7 @@ import { getAuthAdapter } from "@/lib/auth/stub";
 import { apiError, jsonOk } from "@/lib/api/helpers";
 import { prisma } from "@/lib/db";
 import { logActivity } from "@/lib/training/activity";
+import { requireActiveEnrollment } from "@/lib/training/enrollment";
 
 export async function POST(request: Request) {
   try {
@@ -14,12 +15,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { enrollmentId, moduleId, sectionId, body: questionBody } = body;
 
-    const enrollment = await prisma.enrollment.findFirst({
-      where: { id: enrollmentId, traineeId: session.userId },
-    });
-    if (!enrollment) {
-      return jsonOk({ error: "Enrollment not found" }, 404);
-    }
+    await requireActiveEnrollment(enrollmentId, session.userId);
 
     const question = await prisma.traineeQuestion.create({
       data: {
