@@ -1,10 +1,15 @@
 import { getAuthAdapter } from "@/lib/auth/stub";
 import { apiError, jsonOk } from "@/lib/api/helpers";
+import {
+  DEFAULT_AI_PROVIDER,
+  isAIProviderId,
+  resolveAIModel,
+} from "@/lib/ai/models";
 import { prisma } from "@/lib/db";
 import { runPlanGeneration } from "@/lib/ai/persist-plan";
 
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -18,6 +23,12 @@ export async function POST(
       return jsonOk({ error: "Not found" }, 404);
     }
 
+    const body = await request.json().catch(() => ({}));
+    const aiProvider =
+      typeof body.aiProvider === "string" && isAIProviderId(body.aiProvider)
+        ? body.aiProvider
+        : DEFAULT_AI_PROVIDER;
+
     await prisma.trainingProgram.update({
       where: { id },
       data: {
@@ -27,9 +38,13 @@ export async function POST(
       },
     });
 
-    runPlanGeneration(id).catch(() => undefined);
+    runPlanGeneration(id, { aiProvider }).catch(() => undefined);
 
-    return jsonOk({ status: "started" });
+    return jsonOk({
+      status: "started",
+      aiProvider,
+      model: resolveAIModel(aiProvider),
+    });
   } catch (error) {
     return apiError(error);
   }

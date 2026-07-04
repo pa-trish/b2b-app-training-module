@@ -15,6 +15,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DEFAULT_TEST_POLICY } from "@/lib/types";
+import {
+  AI_PROVIDERS,
+  DEFAULT_AI_PROVIDER,
+  getAIProvider,
+  type AIProviderId,
+} from "@/lib/ai/models";
 
 const steps = ["Configure", "Upload", "Generate", "Review"];
 
@@ -42,6 +48,8 @@ export default function NewProgramPage() {
   });
 
   const [files, setFiles] = useState<FileList | null>(null);
+  const [aiProvider, setAiProvider] = useState<AIProviderId>(DEFAULT_AI_PROVIDER);
+  const selectedProvider = getAIProvider(aiProvider);
 
   async function createProgram() {
     setLoading(true);
@@ -85,12 +93,29 @@ export default function NewProgramPage() {
       method: "POST",
       body: formData,
     });
+    const data = await res.json();
     setLoading(false);
     if (!res.ok) {
-      const data = await res.json();
       setError(data.error || "Upload failed");
       return;
     }
+
+    const failed = (data.documents ?? []).filter(
+      (doc: { parseStatus?: string }) => doc.parseStatus === "FAILED"
+    );
+    if (failed.length > 0) {
+      const names = failed
+        .map((doc: { fileName?: string }) => doc.fileName)
+        .filter(Boolean)
+        .join(", ");
+      setError(
+        names
+          ? `Could not extract text from: ${names}. Supported formats: PDF, DOCX, TXT, MD.`
+          : "Could not extract text from one or more uploaded files."
+      );
+      return;
+    }
+
     setStep(2);
   }
 
@@ -98,7 +123,11 @@ export default function NewProgramPage() {
     if (!programId) return;
     setLoading(true);
     setError("");
-    await fetch(`/api/programs/${programId}/generate`, { method: "POST" });
+    await fetch(`/api/programs/${programId}/generate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ aiProvider }),
+    });
     pollGeneration();
   }
 
@@ -257,9 +286,33 @@ export default function NewProgramPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {generation.status === "IDLE" || generation.status === "PENDING" ? (
-              <p className="text-muted-foreground">
-                AI will build a {form.totalDays}-day plan with modules, interactive sections, and tests.
-              </p>
+              <>
+                <p className="text-muted-foreground">
+                  AI will build a {form.totalDays}-day plan with modules, interactive sections, and tests.
+                </p>
+                <div className="space-y-2">
+                  <Label>AI model</Label>
+                  <Select
+                    value={aiProvider}
+                    onValueChange={(value) => setAiProvider(value as AIProviderId)}
+                    disabled={loading}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {AI_PROVIDERS.map((provider) => (
+                        <SelectItem key={provider.id} value={provider.id}>
+                          {provider.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedProvider.description} ({selectedProvider.model})
+                  </p>
+                </div>
+              </>
             ) : (
               <p>
                 Status: {generation.status} — {generation.progress}%

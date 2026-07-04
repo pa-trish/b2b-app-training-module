@@ -7,7 +7,7 @@ Standalone Next.js pilot for manager-led employee training: upload documents, AI
 - Next.js 16 (App Router) + TypeScript
 - PostgreSQL + Prisma
 - shadcn/ui + Tailwind
-- OpenAI (optional — fallback generator works offline)
+- OpenRouter via OpenAI-compatible API (optional — fallback generator works offline)
 
 ## Quick start
 
@@ -26,12 +26,17 @@ DATABASE_URL="postgresql://training:training@localhost:5432/training_module?sche
 SESSION_SECRET="your-long-random-secret"
 ```
 
-Optional for real AI generation:
+Optional for real AI generation via [OpenRouter](https://openrouter.ai/):
 
 ```
-AI_API_KEY="sk-..."
-AI_MODEL="gpt-4o"
+AI_API_KEY="sk-or-..."
+AI_BASE_URL="https://openrouter.ai/api/v1"
+AI_MODEL="openrouter/free"
+AI_SITE_URL="http://localhost:3000"
+AI_APP_NAME="B2B Training Module"
 ```
+
+Use any OpenRouter model id, e.g. `anthropic/claude-sonnet-4` or `google/gemini-2.5-pro`.
 
 ### 3. Install and migrate
 

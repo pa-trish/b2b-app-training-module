@@ -1,13 +1,7 @@
-import OpenAI from "openai";
+import { getAIClient, getAIModel } from "@/lib/ai/client";
 import { trainingPlanSchema, type TrainingPlan } from "./schemas/training-plan";
 import type { TestPolicy } from "@/lib/types";
 import { getQuestionCountForComplexity } from "@/lib/training/scoring";
-
-function getOpenAIClient() {
-  const apiKey = process.env.AI_API_KEY;
-  if (!apiKey) return null;
-  return new OpenAI({ apiKey });
-}
 
 export function buildPlanPrompt(params: {
   totalDays: number;
@@ -67,9 +61,11 @@ export async function generateTrainingPlan(params: {
   testPolicy: TestPolicy;
   managerNotes?: string | null;
   documentTexts: string[];
+  aiProvider?: string;
 }): Promise<TrainingPlan> {
-  const client = getOpenAIClient();
+  const client = getAIClient();
   const prompt = buildPlanPrompt(params);
+  const model = getAIModel(params.aiProvider);
 
   if (!client) {
     return buildFallbackPlan(params);
@@ -77,7 +73,7 @@ export async function generateTrainingPlan(params: {
 
   try {
     const response = await client.chat.completions.create({
-      model: process.env.AI_MODEL || "gpt-4o",
+      model,
       messages: [
         {
           role: "system",

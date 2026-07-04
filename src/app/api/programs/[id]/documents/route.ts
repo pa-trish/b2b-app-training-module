@@ -35,7 +35,12 @@ export async function POST(
 
       try {
         extractedText = await extractTextFromBuffer(buffer, entry.type, entry.name);
+        if (!extractedText.trim()) {
+          extractedText = null;
+          parseStatus = "FAILED";
+        }
       } catch {
+        extractedText = null;
         parseStatus = "FAILED";
       }
 
