@@ -10,7 +10,8 @@ export async function verifyPassword(password: string, hash: string) {
 }
 
 export async function authenticateUser(email: string, password: string) {
-  const user = await prisma.user.findUnique({ where: { email } });
+  const user = await prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } });
+  if (!user || !user.isActive) return null;
   if (!user) return null;
   const valid = await verifyPassword(password, user.passwordHash);
   if (!valid) return null;

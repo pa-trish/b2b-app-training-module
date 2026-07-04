@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { hashPassword } from "@/lib/auth/credentials";
+import { hashPassword, verifyPassword } from "@/lib/auth/credentials";
 import { getAuthAdapter } from "@/lib/auth/stub";
 import { prisma } from "@/lib/db";
 import { apiError, jsonOk } from "@/lib/api/helpers";
@@ -28,8 +28,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const bcrypt = await import("bcryptjs");
-    const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+    const valid = await verifyPassword(currentPassword, user.passwordHash);
     if (!valid) {
       return NextResponse.json({ error: "Current password is incorrect" }, { status: 400 });
     }
@@ -42,7 +41,11 @@ export async function POST(request: Request) {
       },
     });
 
-    return jsonOk({ ok: true });
+    return jsonOk({
+      ok: true,
+      role:
+        user.role === "ADMIN" ? "admin" : user.role === "MANAGER" ? "manager" : "trainee",
+    });
   } catch (error) {
     return apiError(error);
   }

@@ -46,7 +46,13 @@ export function ChangePasswordForm() {
       return;
     }
 
-    router.push("/");
+    const destination =
+      data.role === "admin"
+        ? "/admin"
+        : data.role === "manager"
+          ? "/manager/dashboard"
+          : "/trainee";
+    router.push(destination);
     router.refresh();
   }
 
@@ -54,9 +60,7 @@ export function ChangePasswordForm() {
     <Card className="w-full max-w-md">
       <CardHeader>
         <CardTitle>Change your password</CardTitle>
-        <CardDescription>
-          You need to set a new password before continuing. Please choose a strong password.
-        </CardDescription>
+        <CardDescription>Enter your current password and choose a new one.</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">

@@ -20,7 +20,25 @@ function normalizeName(value: string) {
   return value.trim();
 }
 
+/** Trainees created via the legacy enroll flow have no managerId until linked. */
+async function linkOrphanedTraineesToManager(managerId: string) {
+  await prisma.user.updateMany({
+    where: {
+      role: "TRAINEE",
+      managerId: null,
+      enrollments: {
+        some: {
+          program: { managerId },
+        },
+      },
+    },
+    data: { managerId },
+  });
+}
+
 export async function listManagerTrainees(managerId: string) {
+  await linkOrphanedTraineesToManager(managerId);
+
   return prisma.user.findMany({
     where: { role: "TRAINEE", managerId },
     orderBy: [{ lastName: "asc" }, { firstName: "asc" }, { name: "asc" }],
@@ -133,6 +151,8 @@ export async function updateManagerTrainee(params: {
 }
 
 export async function getManagerTrainee(managerId: string, traineeId: string) {
+  await linkOrphanedTraineesToManager(managerId);
+
   const trainee = await prisma.user.findFirst({
     where: {
       id: traineeId,

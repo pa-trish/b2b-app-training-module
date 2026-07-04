@@ -25,7 +25,7 @@ export async function POST(request: Request) {
         id: user.id,
         email: user.email,
         name: user.name,
-        role: user.role === "MANAGER" ? "manager" : "trainee",
+        role: user.role === "ADMIN" ? "admin" : user.role === "MANAGER" ? "manager" : "trainee",
       },
     });
   } catch (error) {

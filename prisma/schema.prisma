@@ -8,6 +8,7 @@ datasource db {
 }
 
 enum UserRole {
+  ADMIN
   MANAGER
   TRAINEE
 }
@@ -72,6 +73,7 @@ model User {
   firstName    String?
   lastName     String?
   role         UserRole
+  isActive     Boolean  @default(true)
   managerId    String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -80,6 +82,19 @@ model User {
   trainees        User[]            @relation("ManagedTrainees")
   managedPrograms TrainingProgram[] @relation("ProgramManager")
   enrollments     Enrollment[]
+  passwordResetTokens PasswordResetToken[]
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model TrainingProgram {
@@ -251,4 +266,5 @@ model ActivityLog {
   enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
 
   @@index([enrollmentId, occurredAt])
+  @@index([occurredAt])
 }

@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import type { User } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import type { AuthAdapter, SessionUser } from "./adapter";
+import { ADMIN_EMAIL } from "@/lib/admin/constants";
 
 const SESSION_COOKIE = "training_session";
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7;
@@ -15,10 +16,16 @@ function getSecret() {
   return new TextEncoder().encode(secret);
 }
 
+function sessionRole(user: User): SessionUser["role"] {
+  if (user.role === "ADMIN") return "admin";
+  if (user.role === "MANAGER") return "manager";
+  return "trainee";
+}
+
 export async function createSessionToken(user: User): Promise<string> {
   return new SignJWT({
     userId: user.id,
-    role: user.role === "MANAGER" ? "manager" : "trainee",
+    role: sessionRole(user),
     email: user.email,
     name: user.name,
   })
@@ -53,7 +60,7 @@ async function readSession(): Promise<SessionUser | null> {
     const { payload } = await jwtVerify(token, getSecret());
     return {
       userId: payload.userId as string,
-      role: payload.role as "manager" | "trainee",
+      role: payload.role as SessionUser["role"],
       email: payload.email as string,
       name: payload.name as string,
     };
@@ -73,8 +80,16 @@ export const stubAuthAdapter: AuthAdapter = {
       throw new AuthError("Unauthorized", 401);
     }
     const user = await prisma.user.findUnique({ where: { id: session.userId } });
-    if (!user) {
+    if (!user || !user.isActive) {
       throw new AuthError("Unauthorized", 401);
+    }
+    return user;
+  },
+
+  async requireAdmin() {
+    const user = await this.requireUser();
+    if (user.role !== "ADMIN" || user.email !== ADMIN_EMAIL) {
+      throw new AuthError("Forbidden", 403);
     }
     return user;
   },

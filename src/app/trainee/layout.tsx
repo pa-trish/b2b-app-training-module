@@ -29,11 +29,18 @@ export default async function TraineeLayout({
             My Training
           </Link>
           {!isPreview ? (
-            <form action={logoutAction}>
-              <Button variant="outline" size="sm" type="submit">
-                Sign out
-              </Button>
-            </form>
+            <div className="flex items-center gap-3">
+              <Link href="/change-password">
+                <Button variant="ghost" size="sm">
+                  Change password
+                </Button>
+              </Link>
+              <form action={logoutAction}>
+                <Button variant="outline" size="sm" type="submit">
+                  Sign out
+                </Button>
+              </form>
+            </div>
           ) : (
             <Link href="/manager/dashboard">
               <Button variant="outline" size="sm">

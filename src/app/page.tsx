@@ -6,6 +6,9 @@ export default async function HomePage() {
   if (!session) {
     redirect("/login");
   }
+  if (session.role === "admin") {
+    redirect("/admin");
+  }
   if (session.role === "manager") {
     redirect("/manager/dashboard");
   }

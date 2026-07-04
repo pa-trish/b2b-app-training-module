@@ -56,11 +56,28 @@ export async function enrollTraineeInProgram(params: {
     where: {
       id: params.traineeId,
       role: "TRAINEE",
-      managerId: params.managerId,
+      OR: [
+        { managerId: params.managerId },
+        {
+          managerId: null,
+          enrollments: {
+            some: {
+              program: { managerId: params.managerId },
+            },
+          },
+        },
+      ],
     },
   });
   if (!trainee) {
     throw new EnrollmentError("Trainee not found", 404);
+  }
+
+  if (trainee.managerId === null) {
+    await prisma.user.update({
+      where: { id: trainee.id },
+      data: { managerId: params.managerId },
+    });
   }
 
   const startDate = params.startDate ?? new Date();
