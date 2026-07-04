@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { EnrollmentStatus } from "@prisma/client";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { EnrollmentActions } from "@/components/manager/EnrollmentActions";
 import { EnrollmentStatusBadge } from "@/components/manager/EnrollmentStatusBadge";
 import { formatUserName } from "@/lib/users/trainee-name";
@@ -12,6 +13,8 @@ type TraineeEnrollment = {
   id: string;
   status: EnrollmentStatus;
   startDate: Date;
+  tasksPercent: number;
+  testsPercent: number;
   trainee: {
     name: string;
     email: string;
@@ -80,6 +83,22 @@ function EnrollmentSection({
               <p className="text-xs text-muted-foreground">
                 Start date: {new Date(enrollment.startDate).toLocaleDateString()}
               </p>
+            </div>
+            <div className="w-full space-y-3 sm:w-48">
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Tasks</span>
+                  <span>{enrollment.tasksPercent}%</span>
+                </div>
+                <Progress value={enrollment.tasksPercent} />
+              </div>
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Tests</span>
+                  <span>{enrollment.testsPercent}%</span>
+                </div>
+                <Progress value={enrollment.testsPercent} />
+              </div>
             </div>
             <div className="flex flex-col items-start gap-3 sm:items-end">
               <div className="flex flex-wrap gap-2">

@@ -86,10 +86,10 @@ export function EnrollTraineeForm({ programId }: { programId: string }) {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2 sm:col-span-2">
+            <div className="space-y-2">
               <Label>Trainee</Label>
               <Select value={traineeId} onValueChange={(value) => setTraineeId(value ?? "")}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select trainee" />
                 </SelectTrigger>
                 <SelectContent>
@@ -100,6 +100,9 @@ export function EnrollTraineeForm({ programId }: { programId: string }) {
                   ))}
                 </SelectContent>
               </Select>
+              <Link href="/manager/trainees" className="text-sm text-muted-foreground hover:text-foreground">
+                Manage trainees
+              </Link>
             </div>
             <div className="space-y-2">
               <Label>Start date</Label>
@@ -109,11 +112,6 @@ export function EnrollTraineeForm({ programId }: { programId: string }) {
                 onChange={(e) => setStartDate(e.target.value)}
                 required
               />
-            </div>
-            <div className="flex items-end">
-              <Link href="/manager/trainees" className="text-sm text-muted-foreground hover:text-foreground">
-                Manage trainees
-              </Link>
             </div>
             <div className="sm:col-span-2">
               <Button type="submit" disabled={loading || !traineeId}>

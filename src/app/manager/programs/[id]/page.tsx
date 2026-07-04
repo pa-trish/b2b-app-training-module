@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getAuthAdapter } from "@/lib/auth/stub";
 import { prisma } from "@/lib/db";
 import { EnrollTraineeForm } from "@/components/manager/EnrollTraineeForm";
+import { PublishProgramButton } from "@/components/manager/PublishProgramButton";
 import { TraineeEnrollmentList } from "@/components/manager/TraineeEnrollmentList";
 import { GeneratePlanPanel } from "@/components/manager/GeneratePlanPanel";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDayHeading } from "@/lib/training/day-title";
+import { computeEnrollmentProgressStats } from "@/lib/training/progress-stats";
 
 export default async function ProgramDetailPage({
   params,
@@ -36,11 +38,21 @@ export default async function ProgramDetailPage({
           },
         },
       },
-      enrollments: { include: { trainee: true } },
+      enrollments: { include: { trainee: true, progress: true, attempts: true } },
     },
   });
 
   if (!program) notFound();
+
+  const modules = program.days.flatMap((day) => day.modules);
+  const enrollmentsWithProgress = program.enrollments.map((enrollment) => ({
+    ...enrollment,
+    ...computeEnrollmentProgressStats({
+      modules,
+      progress: enrollment.progress,
+      attempts: enrollment.attempts,
+    }),
+  }));
 
   return (
     <div className="space-y-6">
@@ -56,6 +68,9 @@ export default async function ProgramDetailPage({
             <Link href={`/manager/programs/${program.id}/preview`}>
               <Button variant="secondary">Preview program</Button>
             </Link>
+          ) : null}
+          {program.status !== "PUBLISHED" && program.days.length > 0 ? (
+            <PublishProgramButton programId={program.id} />
           ) : null}
           <Badge>{program.status.toLowerCase()}</Badge>
         </div>
@@ -113,12 +128,19 @@ export default async function ProgramDetailPage({
         <TabsContent value="trainees" className="space-y-4">
           {program.status === "PUBLISHED" ? (
             <EnrollTraineeForm programId={program.id} />
-          ) : (
+          ) : program.days.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Publish the program before assigning trainees.
+              Generate a training plan before publishing and assigning trainees.
             </p>
+          ) : (
+            <div className="space-y-3 rounded-lg border p-4">
+              <p className="text-sm text-muted-foreground">
+                Publish the program to assign trainees.
+              </p>
+              <PublishProgramButton programId={program.id} />
+            </div>
           )}
-          <TraineeEnrollmentList programId={program.id} enrollments={program.enrollments} />
+          <TraineeEnrollmentList programId={program.id} enrollments={enrollmentsWithProgress} />
         </TabsContent>
       </Tabs>
     </div>
